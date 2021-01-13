@@ -3,6 +3,7 @@
 // The first argument is the AppId of the game/app we want to idle
 // The second argument is the process id of the "parent/master" exe
 // This program closes itself whenever the process id of the "parent/master" exe is no longer a valid process (aka "parent/master" exe exited)
+// This program will insta-close if any arguments are invalid/nonexistent
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -54,10 +55,9 @@ namespace SingleBoostr.IdlingProcess
 
         private static int Main(string[] args)
         {
-            if (!uint.TryParse(args[0], out _))
+            if (!uint.TryParse(args[0], out _) && !int.TryParse(args[1], out var parentProcessId) && parentProcessId > 0)
             {
                 var kill = Process.GetCurrentProcess();
-                kill.Close();
                 kill.Kill();
                 kill.WaitForExit();
                 return 1;
@@ -91,13 +91,12 @@ namespace SingleBoostr.IdlingProcess
 
             if (ConnectToSteam() == ErrorCodes.Success)
             {
-                if (args.Length >= 2 && int.TryParse(args[1], out var parentProcessId) && parentProcessId != 0)
-                    _bwg.RunWorkerAsync(parentProcessId);
+                _bwg.RunWorkerAsync(parentProcessId);
                 Process.GetCurrentProcess().WaitForExit();
                 //await Task.Delay(-1);
             }
 
-            return 0; 
+            return 1; 
         }
     }
 
