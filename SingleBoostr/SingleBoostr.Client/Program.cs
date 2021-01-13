@@ -98,11 +98,11 @@ namespace SingleBoostr.Client
             {
                 await Task.Delay(seconds * 1000);
                 
-                var index = ActiveIdlingProcesses.Count == 1 ? 1 : random.Next(0, ActiveIdlingProcesses.Count+1);
+                var index = random.Next(ActiveIdlingProcesses.Count);
                 
                 var toKillData = ActiveIdlingProcesses[index];
                 toKillData.IdlingProcess.Kill();
-                toKillData.IdlingProcess.Close();
+                toKillData.IdlingProcess.Dispose();
                 ActiveIdlingProcesses.RemoveAt(index);
                 
                 var startInfo = new ProcessStartInfo(exe)
