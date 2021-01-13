@@ -43,7 +43,7 @@ namespace SingleBoostr.Client
                 var _configParser = new FileIniDataParser();
                 var _configData = new IniData();
                 _configData.Sections.AddSection("Config");
-                _configData["Config"].AddKey("SecondsUntilRestartAll", "3600");
+                _configData["Config"].AddKey("SecondsUntilRestart", "3600");
                 _configParser.WriteFile(config, _configData);
                 
                 Console.WriteLine("(exit this program, then edit the config file)");
@@ -54,12 +54,12 @@ namespace SingleBoostr.Client
             var configParser = new FileIniDataParser();
             var configData = configParser.ReadFile(config);
 
-            if (int.TryParse(configData["Config"]["SecondsUntilRestartAll"], out var seconds))
+            if (int.TryParse(configData["Config"]["SecondsUntilRestart"], out var seconds))
             {
                 // If config fails, set the default reset interval to 1 hour
                 if (seconds <= 0)
                 {
-                    Console.WriteLine("SecondsUntilRestartAll is zero or a negative number - defaulting to 3600 seconds (1 hour)");
+                    Console.WriteLine("SecondsUntilRestart is zero or a negative number - defaulting to 3600 seconds (1 hour)");
                     seconds = 3600;
                 }
                 
