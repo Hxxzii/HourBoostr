@@ -55,7 +55,7 @@ namespace SingleBoostr.IdlingProcess
 
         private static int Main(string[] args)
         {
-            if (!uint.TryParse(args[0], out _) && !int.TryParse(args[1], out var parentProcessId) && parentProcessId > 0)
+            if (!uint.TryParse(args[0], out _) || !int.TryParse(args[1], out var parentProcessId) && parentProcessId > 0)
             {
                 var kill = Process.GetCurrentProcess();
                 kill.Kill();
