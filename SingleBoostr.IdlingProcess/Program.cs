@@ -1,4 +1,8 @@
 // TODO: Actually handle the errors+error codes
+// NOTE: This helper/background program is called with two arguments
+// The first argument is the AppId of the game/app we want to idle
+// The second argument is the process id of the "parent/master" exe
+// This program closes itself whenever the process id of the "parent/master" exe is no longer a valid process (aka "parent/master" exe exited)
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
