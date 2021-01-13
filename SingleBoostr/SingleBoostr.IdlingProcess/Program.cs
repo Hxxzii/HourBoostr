@@ -1,4 +1,5 @@
-﻿using System;
+// TODO: Actually handle the errors+error codes
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
