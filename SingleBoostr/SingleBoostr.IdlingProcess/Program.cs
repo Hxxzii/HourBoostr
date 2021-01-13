@@ -48,7 +48,7 @@ namespace SingleBoostr.IdlingProcess
             return ErrorCodes.Success;
         }
 
-        private static async Task<int> Main(string[] args)
+        private static int Main(string[] args)
         {
             if (!uint.TryParse(args[0], out _))
             {
