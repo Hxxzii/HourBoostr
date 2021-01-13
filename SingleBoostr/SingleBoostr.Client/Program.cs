@@ -35,7 +35,7 @@ namespace SingleBoostr.Client
                 return 1;
             }
 
-            if (!File.Exists(config))
+            if (!File.Exists(config) || new FileInfo(config).Length == 0)
             {
                 File.CreateText(config).Dispose();
                 Console.WriteLine("Config doesn't exist (config.ini)");
@@ -65,6 +65,9 @@ namespace SingleBoostr.Client
                 }
                 
                 Console.WriteLine($"Idling processes will restart every {seconds} seconds");
+            } else {
+                Console.WriteLine("Config file is invalid - defaulting SecondsUntilRestart to 3600 seconds (1 hour) - delete config.ini to regenerate the config file");
+                seconds = 3600;
             }
 
             foreach (var i in File.ReadAllLines(applist))
