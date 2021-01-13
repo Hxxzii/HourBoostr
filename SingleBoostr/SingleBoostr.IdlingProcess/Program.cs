@@ -10,8 +10,8 @@ namespace SingleBoostr.IdlingProcess
 {
     public class Program
     {
-        private static ISteamClient017 _steamClient012;
-        private static ISteamApps006 _steamApps001;
+        private static ISteamClient017 _steamClient;
+        private static ISteamApps006 _steamApp;
         private static BackgroundWorker _bwg;
 
         private static ErrorCodes ConnectToSteam()
@@ -21,26 +21,26 @@ namespace SingleBoostr.IdlingProcess
                 return ErrorCodes.SteamworksFail;
             }
 
-            _steamClient012 = Steamworks.CreateInterface<ISteamClient017>();
-            if (_steamClient012 == null)
+            _steamClient = Steamworks.CreateInterface<ISteamClient017>();
+            if (_steamClient == null)
             {
                 return ErrorCodes.ClientFail;
             }
 
-            int pipe = _steamClient012.CreateSteamPipe();
+            int pipe = _steamClient.CreateSteamPipe();
             if (pipe == 0)
             {
                 return ErrorCodes.PipeFail;
             }
 
-            int user = _steamClient012.ConnectToGlobalUser(pipe);
+            int user = _steamClient.ConnectToGlobalUser(pipe);
             if (user == 0)
             {
                 return ErrorCodes.UserFail;
             }
 
-            _steamApps001 = _steamClient012.GetISteamApps<ISteamApps006>(user, pipe);
-            if (_steamApps001 == null)
+            _steamApp = _steamClient.GetISteamApps<ISteamApps006>(user, pipe);
+            if (_steamApp == null)
             {
                 return ErrorCodes.AppsFail;
             }

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("SingleBoostr.IdlingProcess")]
-[assembly: AssemblyDescription("Idle Steam game hours and cards")]
-[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyDescription("Idle Steam game hours and cards - helper exe")]
+[assembly: AssemblyConfiguration("Release")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("SingleBoostr.IdlingProcess")]
-[assembly: AssemblyCopyright("Copyright © Ezzpify 2017")]
+[assembly: AssemblyCopyright("Copyright © Ezzpify 2017 (original), Hxxzii 2021 (fork)")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("4.0.0.0")]
-[assembly: AssemblyFileVersion("4.0.0.0")]
+[assembly: AssemblyVersion("4.0.1.0")]
+[assembly: AssemblyFileVersion("4.0.1.0")]
