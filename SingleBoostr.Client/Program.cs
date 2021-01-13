@@ -36,8 +36,8 @@ namespace SingleBoostr.Client
             if (!File.Exists(config) || new FileInfo(config).Length == 0)
             {
                 File.CreateText(config).Dispose();
-                Console.WriteLine("Config doesn't exist (config.ini)");
-                Console.WriteLine("Config file has been created, please adjust accordingly");
+                Console.WriteLine("Config doesn't exist (config.ini), or it is empty");
+                Console.WriteLine("Config file has been created/regenerated, please adjust accordingly");
                 
                 var _configParser = new FileIniDataParser();
                 var _configData = new IniData();
