@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -99,10 +100,10 @@ namespace SingleBoostr.Client
                 await Task.Delay(seconds * 1000);
                 
                 var index = random.Next(ActiveIdlingProcesses.Count);
-                
-                var toKillData = ActiveIdlingProcesses[index];
-                toKillData.IdlingProcess.Kill();
-                toKillData.IdlingProcess.Dispose();
+                var appid = ActiveIdlingProcesses[index].AppId;
+
+                ActiveIdlingProcesses[index].IdlingProcess.Kill();
+                ActiveIdlingProcesses[index].IdlingProcess.Dispose();
                 ActiveIdlingProcesses.RemoveAt(index);
                 
                 var startInfo = new ProcessStartInfo(exe)
@@ -113,13 +114,13 @@ namespace SingleBoostr.Client
                     //RedirectStandardInput = true,
                     //RedirectStandardOutput = true,
                     //RedirectStandardError = true,
-                    Arguments = $"{toKillData.AppId} {Process.GetCurrentProcess().Id}"
+                    Arguments = $"{appid} {Process.GetCurrentProcess().Id}"
                 };
 
                 var startProcess = Process.Start(startInfo);
-                ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, toKillData.AppId));
+                ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, appid));
                 
-                Console.WriteLine($"Idling process for AppId {toKillData.AppId} has been restarted");
+                Console.WriteLine($"Idling process for AppId {appid} has been restarted");
             }
         }
 
