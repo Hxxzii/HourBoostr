@@ -65,46 +65,78 @@ namespace SingleBoostr.Client
                 
                 Console.WriteLine($"Idling processes will restart every {seconds} seconds");
             }
-            
+
+            foreach (var i in File.ReadAllLines(applist))
+            {
+                if (!int.TryParse(i, out _) || string.IsNullOrWhiteSpace(i))
+                {
+                    Console.WriteLine($"AppId {i} is an invalid AppId, skipping");
+                    continue;
+                }
+
+                var currentProcessId = Process.GetCurrentProcess().Id;
+                
+                var startInfo = new ProcessStartInfo(exe)
+                {
+                    UseShellExecute = false,
+                    WindowStyle = ProcessWindowStyle.Normal,
+                    CreateNoWindow = true,
+                    //RedirectStandardInput = true,
+                    //RedirectStandardOutput = true,
+                    //RedirectStandardError = true,
+                    Arguments = $"{i} {currentProcessId}"
+                };
+
+                var startProcess = Process.Start(startInfo);
+                ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, int.Parse(i)));
+                Console.WriteLine($"AppId {i} is now boosting!");
+            }
+
+            var random = new Random();
+
             while (true)
             {
-                foreach (var i in File.ReadAllLines(applist))
-                {
-                    if (!int.TryParse(i, out _) || string.IsNullOrWhiteSpace(i))
-                    {
-                        Console.WriteLine($"AppId {i} is an invalid AppId, skipping");
-                        continue;
-                    }
+                await Task.Delay(seconds * 1000);
 
-                    var startInfo = new ProcessStartInfo(exe)
-                    {
-                        UseShellExecute = false,
-                        WindowStyle = ProcessWindowStyle.Normal,
-                        CreateNoWindow = true,
-                        //RedirectStandardInput = true,
-                        //RedirectStandardOutput = true,
-                        //RedirectStandardError = true,
-                        Arguments = $"{i} {Process.GetCurrentProcess().Id}"
-                    };
+                var index = 0;
+                
+                index = ActiveIdlingProcesses.Count == 1 ? 1 : random.Next(0, ActiveIdlingProcesses.Count+1);
+                
+                var toKillData = ActiveIdlingProcesses[index];
+                toKillData.IdlingProcess.Kill();
+                toKillData.IdlingProcess.Close();
+                ActiveIdlingProcesses.RemoveAt(index);
 
-                    var startProcess = Process.Start(startInfo);
-                    IdlingProcesses.Add(startProcess);
-                    Console.WriteLine($"AppId {i} is now boosting!");
-                }
-                
-                await Task.Delay(seconds*1000);
-                
-                foreach (var i in IdlingProcesses)
+                var startInfo = new ProcessStartInfo(exe)
                 {
-                    i.Kill();
-                    i.Close();
-                }
+                    UseShellExecute = false,
+                    WindowStyle = ProcessWindowStyle.Normal,
+                    CreateNoWindow = true,
+                    //RedirectStandardInput = true,
+                    //RedirectStandardOutput = true,
+                    //RedirectStandardError = true,
+                    Arguments = $"{toKillData.AppId} {Process.GetCurrentProcess().Id}"
+                };
+
+                var startProcess = Process.Start(startInfo);
+                ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, toKillData.AppId));
                 
-                IdlingProcesses.Clear();
-                Console.WriteLine("All idling processes have been restarted");
+                Console.WriteLine($"Idling process for AppId {toKillData.AppId} has been restarted");
             }
         }
 
-        private static List<Process> IdlingProcesses { get; } = new List<Process>();
+        private static List<IdlingAppData> ActiveIdlingProcesses { get; } = new List<IdlingAppData>();
+    }
+
+    public class IdlingAppData
+    {
+        public Process IdlingProcess { get; set; }
+        public int AppId { get; set; }
+
+        public IdlingAppData(Process _i, int _a)
+        {
+            IdlingProcess = _i;
+            AppId = _a; 
+        }
     }
 }
