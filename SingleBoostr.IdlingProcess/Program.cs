@@ -8,7 +8,9 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Steam4NET;
 
 namespace SingleBoostr.IdlingProcess
@@ -53,14 +55,13 @@ namespace SingleBoostr.IdlingProcess
             return ErrorCodes.Success;
         }
 
-        private static int Main(string[] args)
+        private static async Task Main(string[] args)
         {
-            if (!uint.TryParse(args[0], out _) || !int.TryParse(args[1], out var parentProcessId) && parentProcessId > 0)
+            int parentProcessId = -1;
+            if (args.Length == 0 || args[0] is null || args[1] is null || 
+                !uint.TryParse(args[0], out _) || !int.TryParse(args[1], out parentProcessId) && parentProcessId > 0)
             {
-                var kill = Process.GetCurrentProcess();
-                kill.Kill();
-                kill.WaitForExit();
-                return 1;
+                ErrorPopup("Insufficient arguments called - exiting\nIf you're trying to idle your games, open SingleBoostr.Client.exe instead");
             }
 
             _bwg = new BackgroundWorker { WorkerSupportsCancellation = true };
@@ -71,32 +72,44 @@ namespace SingleBoostr.IdlingProcess
 
                 if (parentProcess == null)
                 {
-                    await Task.Delay(10000);
+                    ErrorPopup("Invalid parent process ID\nPlease exit the client and create a GitHub issue if you get this error");
                 }
                 else
                 {
                     while (!_bwg.CancellationPending)
                     {
-                        if (parentProcess.HasExited)
-                            break;
-
                         await Task.Delay(10000);
+
+                        if (parentProcess.HasExited)
+                        {
+                            _bwg.CancelAsync();
+                            Environment.Exit(0);
+                        }
                     }
                 }
-
-                Environment.Exit(1);
             };
 
             Environment.SetEnvironmentVariable("SteamAppId", args[0]);
 
-            if (ConnectToSteam() == ErrorCodes.Success)
-            {
+            var tryConnectSteam = ConnectToSteam();
+            
+            if (tryConnectSteam == ErrorCodes.Success)
+            { 
                 _bwg.RunWorkerAsync(parentProcessId);
-                Process.GetCurrentProcess().WaitForExit();
-                //await Task.Delay(-1);
+                await Task.Delay(-1);
             }
+            else
+            {
+                ErrorPopup($"{Enum.GetName(typeof(ErrorCodes), tryConnectSteam)} fatal error caused by appId: {args[0]}\nPlease exit the client and create a GitHub issue and describe what error you got");
+            }
+        }
 
-            return 1; 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ErrorPopup(string msg)
+        {
+            MessageBox.Show(msg, "SingleBoostr.IdlingProcess ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            GC.Collect(GC.MaxGeneration);
+            Environment.Exit(1);
         }
     }
 

@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using IniParser;
-using IniParser.Model;
 
 namespace SingleBoostr.Client
 {
-    public class Program 
+    public class Program
     {
         private static async Task<int> Main()
         {
             var applist = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "applist.txt");
             var exe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SingleBoostr.IdlingProcess.exe");
-            var config = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.ini");
 
             if (!File.Exists(exe))
             {
@@ -33,29 +33,25 @@ namespace SingleBoostr.Client
                 return 1;
             }
 
-            if (!File.Exists(config) || new FileInfo(config).Length == 0)
+            ConfigHandler config = new ConfigHandler();
+            
+            if (!config.ConfigExistsAndValid)
             {
-                File.CreateText(config).Dispose();
+                File.CreateText(ConfigHandler.ConfigPath).Dispose();
                 Console.WriteLine("Config doesn't exist (config.ini), or it is empty");
                 Console.WriteLine("Config file has been created/regenerated, please adjust accordingly");
                 
-                var _configParser = new FileIniDataParser();
-                var _configData = new IniData();
-                _configData.Sections.AddSection("Config");
-                _configData["Config"].AddKey("SecondsUntilRestart", "3600");
-                _configParser.WriteFile(config, _configData);
+                config.FreshConfig();
                 
                 Console.WriteLine("(exit this program, then edit the config file)");
                 await Task.Delay(-1);
                 return 1;
             }
 
-            var configParser = new FileIniDataParser();
-            var configData = configParser.ReadFile(config);
+            config.InitializeData();
 
-            if (int.TryParse(configData["Config"]["SecondsUntilRestart"], out var seconds))
+            if (int.TryParse(config.GetValue("SecondsUntilRestart"), out var seconds))
             {
-                // If config fails, set the default reset interval to 1 hour
                 if (seconds <= 0)
                 {
                     Console.WriteLine("SecondsUntilRestart is zero or a negative number - defaulting to 3600 seconds (1 hour)");
@@ -63,12 +59,58 @@ namespace SingleBoostr.Client
                 }
                 
                 Console.WriteLine($"Idling processes will restart every {seconds} seconds");
-            } else {
-                Console.WriteLine("Config file is invalid - defaulting SecondsUntilRestart to 3600 seconds (1 hour) - delete config.ini to regenerate the config file");
+            }
+            else
+            {
+                Console.WriteLine("SecondsUntilRestart value is not a number - defaulting to 3600 seconds (1 hour)");
                 seconds = 3600;
             }
 
-            foreach (var i in File.ReadAllLines(applist))
+            var listOfApps = new List<string>();
+            
+            if (bool.TryParse(config.GetValue("InputAppIdsDuringRuntime"), out var inputDuringRuntime) && inputDuringRuntime)
+            {
+                Console.WriteLine("InputAppIdsDuringRuntime is set to true - ignoring applist.txt and receiving appIds via input now");
+                Console.WriteLine("Please input one appId at a time, then press enter");
+                Console.WriteLine("Do this for each individual appId that you want to input");
+                Console.WriteLine("When you are done inputting appIds and you're ready to star idle, input anything that isn't a number (ex: done)");
+                Console.WriteLine("Small note: All whitespaces/spaces will be removed from any inputted string");
+
+                while (true)
+                {
+                    var inputtedAppId = RemoveAllWhitespace(Console.ReadLine());
+
+                    if (string.IsNullOrWhiteSpace(inputtedAppId) || !inputtedAppId.All(char.IsDigit))
+                    {
+                        Console.WriteLine("Detected non-numeric input, proceeding to idle games now");
+                        break;
+                    }
+
+                    listOfApps.Add(inputtedAppId);
+                    Console.WriteLine($"AppId {inputtedAppId} successfully added");
+                }
+
+                if (!listOfApps.Any())
+                {
+                    Console.WriteLine("ERROR: you inputted no valid appIds");
+                    Console.WriteLine("(please restart the app and input valid appIds)");
+                    Console.WriteLine("(OR in config.ini, set InputAppIdsDuringRuntime = false and put your appIds in applist.txt, one appId per line)");
+                    await Task.Delay(-1);
+                }
+            }
+            else
+            {
+                listOfApps = File.ReadAllLines(applist).ToList();
+                if (!listOfApps.Any())
+                {
+                    Console.WriteLine("ERROR: applist.txt is empty - therefore no apps will get idled");
+                    Console.WriteLine("(please exit the app and edit your applist.txt file to contain appids)");
+                    Console.WriteLine("(OR in config.ini, set InputAppIdsDuringRuntime = true)");
+                    await Task.Delay(-1);
+                }
+            }
+
+            foreach (var i in listOfApps)
             {
                 if (!int.TryParse(i, out _) || string.IsNullOrWhiteSpace(i))
                 {
@@ -77,7 +119,7 @@ namespace SingleBoostr.Client
                 }
 
                 var currentProcessId = Process.GetCurrentProcess().Id;
-                
+
                 var startInfo = new ProcessStartInfo(exe)
                 {
                     UseShellExecute = false,
@@ -125,6 +167,13 @@ namespace SingleBoostr.Client
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string RemoveAllWhitespace(string str)
+        {
+            return RegexInst.Replace(str, string.Empty);
+        }
+        
+        private static Regex RegexInst { get; } = new Regex(@"\s+");
         private static List<IdlingAppData> ActiveIdlingProcesses { get; } = new List<IdlingAppData>();
     }
 
