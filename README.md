@@ -2,7 +2,7 @@
 ### This fork aims for simplicity (console-only interface, hopefully low RAM usage)
 ### If you have any problems with this fork, make an issue in this repository, NOT the original repository.
 #### Libraries used: INIParser and Steam4NET
-#### The only source code used from the original repository is [this file](https://github.com/Ezzpify/HourBoostr/blob/master/SingleBoostr/SingleBoostrGame/SingleBoostrGame/Program.cs)
+#### The only source code used from the original repository is [this file](https://github.com/Ezzpify/HourBoostr/blob/master/SingleBoostr/SingleBoostrGame/SingleBoostrGame/Program.cs) and has been incorporated [here](https://github.com/Hxxzii/SingleBoostr/blob/master/SingleBoostr.IdlingProcess/Program.cs)
 #### Furthermore, this fork is licensed under the same license as the original repository: [GNU GPL-v3.0](https://github.com/Hxxzii/HourBoostr/blob/master/LICENSE)
 ----
 Build instructions:
