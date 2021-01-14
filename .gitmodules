@@ -1,3 +1,6 @@
 [submodule "Steam4NET"]
 	path = Steam4NET
 	url = https://github.com/SteamRE/Steam4NET
+[submodule "ini-parser"]
+	path = ini-parser
+	url = https://github.com/rickyah/ini-parser
