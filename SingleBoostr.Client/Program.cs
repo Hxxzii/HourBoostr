@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -16,36 +15,23 @@ namespace SingleBoostr.Client
             var applist = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "applist.txt");
             var exe = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SingleBoostr.IdlingProcess.exe");
 
+            SetConsoleTextColor(ConsoleColor.Red);
+
             if (!File.Exists(exe))
             {
-                SetConsoleTextColor(ConsoleColor.Red);
                 Console.WriteLine("ERROR: Helper exe not located (SingleBoostr.IdlingProcess.exe)");
                 Console.WriteLine("Please put this program beside the helper exe or reinstall this program");
                 await Task.Delay(-1);
                 return 1;
             }
 
-            ConfigHandler config = new ConfigHandler();
+            var config = new ConfigHandler();
             
-            if (!config.ConfigExistsAndValid)
-            {
-                SetConsoleTextColor(ConsoleColor.Red);
-                File.CreateText(ConfigHandler.ConfigPath).Dispose();
-                Console.WriteLine("ERROR: Config doesn't exist (config.ini), or it is empty");
-                Console.WriteLine("Config file has been created/regenerated, please adjust accordingly");
-                
-                config.FreshConfig();
-                
-                Console.WriteLine("(exit this program, then edit the config file)");
-                await Task.Delay(-1);
-                return 1;
-            }
-
             config.InitializeData();
 
-            if (bool.TryParse(config.GetValue("InputAppIdsDuringRuntime"), out var inputDuringRuntime) && !inputDuringRuntime && !File.Exists(applist))
+            if (bool.TryParse(config.GetValue("InputAppIdsDuringRuntime"), out var inputDuringRuntime) 
+                && !inputDuringRuntime && !File.Exists(applist))
             {
-                SetConsoleTextColor(ConsoleColor.Red);
                 File.CreateText(applist).Dispose();
                 Console.WriteLine("ERROR: App list doesn't exist (applist.txt)");
                 Console.WriteLine("App list file has been created, please add your appids that you want to idle in the config file");
@@ -54,28 +40,27 @@ namespace SingleBoostr.Client
                 await Task.Delay(-1);
                 return 1;
             }
-
+            
+            SetConsoleTextColor(ConsoleColor.Yellow);
+            
             if (int.TryParse(config.GetValue("SecondsUntilRestart"), out var seconds))
             {
                 if (seconds <= 0)
-                {
-                    SetConsoleTextColor(ConsoleColor.Yellow);
+                { 
                     Console.WriteLine("WARNING: SecondsUntilRestart is zero or a negative number - defaulting to 3600 seconds (1 hour)");
                     seconds = 3600;
                 }
-                
-                SetConsoleTextColor(ConsoleColor.White);
-                Console.WriteLine($"Idling processes will restart every {seconds} seconds");
             }
             else
             {
-                SetConsoleTextColor(ConsoleColor.Yellow);
                 Console.WriteLine("WARNING: SecondsUntilRestart value is not a number - defaulting to 3600 seconds (1 hour)");
                 seconds = 3600;
             }
 
-            var listOfApps = new List<string>();
             SetConsoleTextColor(ConsoleColor.White);
+            Console.WriteLine($"Idling processes will restart every {seconds} seconds");
+
+            var listOfApps = new List<string>();
             
             if (inputDuringRuntime)
             {
@@ -94,6 +79,7 @@ namespace SingleBoostr.Client
                     var inputtedAppId = RemoveAllWhitespace(Console.ReadLine());
                     if (string.IsNullOrWhiteSpace(inputtedAppId) || !inputtedAppId.All(char.IsDigit))
                     {
+                        SetConsoleTextColor(ConsoleColor.White);
                         Console.WriteLine("Detected non-numeric input, proceeding to idle games now");
                         break;
                     }
@@ -161,6 +147,7 @@ namespace SingleBoostr.Client
 
             var random = new Random();
 
+            SetConsoleTextColor(ConsoleColor.Yellow);
             while (true)
             {
                 await Task.Delay(seconds * 1000);
@@ -185,35 +172,21 @@ namespace SingleBoostr.Client
 
                 var startProcess = Process.Start(startInfo);
                 ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, appid));
-                
                 Console.WriteLine($"Idling process for AppId {appid} has been restarted");
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string RemoveAllWhitespace(string str)
         {
             return RegexInst.Replace(str, string.Empty);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void SetConsoleTextColor(ConsoleColor color)
+        internal static void SetConsoleTextColor(ConsoleColor color)
         {
             Console.ForegroundColor = color;
         }
+        
         private static Regex RegexInst { get; } = new Regex(@"\s+");
         private static List<IdlingAppData> ActiveIdlingProcesses { get; } = new List<IdlingAppData>();
-    }
-
-    public class IdlingAppData
-    {
-        public Process IdlingProcess { get; set; }
-        public int AppId { get; set; }
-
-        public IdlingAppData(Process _i, int _a)
-        {
-            IdlingProcess = _i;
-            AppId = _a; 
-        }
     }
 }

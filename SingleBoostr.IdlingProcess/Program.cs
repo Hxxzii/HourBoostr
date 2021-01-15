@@ -34,34 +34,29 @@ namespace SingleBoostr.IdlingProcess
                 return ErrorCodes.ClientFail;
             }
 
-            int pipe = _steamClient.CreateSteamPipe();
+            var pipe = _steamClient.CreateSteamPipe();
             if (pipe == 0)
             {
                 return ErrorCodes.PipeFail;
             }
 
-            int user = _steamClient.ConnectToGlobalUser(pipe);
+            var user = _steamClient.ConnectToGlobalUser(pipe);
             if (user == 0)
             {
                 return ErrorCodes.UserFail;
             }
 
             _steamApp = _steamClient.GetISteamApps<ISteamApps006>(user, pipe);
-            if (_steamApp == null)
-            {
-                return ErrorCodes.AppsFail;
-            }
-
-            return ErrorCodes.Success;
+            return _steamApp == null ? ErrorCodes.AppsFail : ErrorCodes.Success;
         }
 
         private static async Task Main(string[] args)
         {
-            int parentProcessId = -1;
+            var parentProcessId = -1;
             if (args.Length == 0 || args[0] is null || args[1] is null || 
                 !uint.TryParse(args[0], out _) || !int.TryParse(args[1], out parentProcessId) && parentProcessId > 0)
             {
-                ErrorPopup("Insufficient arguments called - exiting\nIf you're trying to idle your games, open SingleBoostr.Client.exe instead");
+                ErrorPopup("Insufficient/invalid arguments called - exiting\nIf you're trying to idle your games, open SingleBoostr.Client.exe instead");
             }
 
             _bwg = new BackgroundWorker { WorkerSupportsCancellation = true };
@@ -80,11 +75,10 @@ namespace SingleBoostr.IdlingProcess
                     {
                         await Task.Delay(10000);
 
-                        if (parentProcess.HasExited)
-                        {
-                            _bwg.CancelAsync();
-                            Environment.Exit(0);
-                        }
+                        if (!parentProcess.HasExited) continue;
+                        
+                        _bwg.CancelAsync();
+                        Environment.Exit(0);
                     }
                 }
             };
