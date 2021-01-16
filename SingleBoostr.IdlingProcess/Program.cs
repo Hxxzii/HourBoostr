@@ -91,10 +91,15 @@ namespace SingleBoostr.IdlingProcess
             { 
                 _bwg.RunWorkerAsync(parentProcessId);
                 await Task.Delay(-1);
-            }
-            else
+            } else if (tryConnectSteam == ErrorCodes.UserFail)
             {
-                ErrorPopup($"{Enum.GetName(typeof(ErrorCodes), tryConnectSteam)} fatal error caused by appId: {args[0]}\nPlease exit the client and create a GitHub issue and describe what error you got");
+                ErrorPopup($"UserFail fatal error - you don't own AppId {args[0]}\nYou can only idle apps that you own\nPlease restart the client with only AppIds that you own"); 
+            } else if (tryConnectSteam == ErrorCodes.SteamWorksFail)
+            {
+                ErrorPopup($"SteamworksFail fatal error (AppId {args[0]}) - you need to have the Steam client open while you use this app\nPlease restart the client and try again");
+            } else 
+            {
+                ErrorPopup($"{Enum.GetName(typeof(ErrorCodes), tryConnectSteam)} unknown fatal error caused by appId: {args[0]}\nPlease exit the client and create a GitHub issue and describe what error you got");
             }
         }
 
