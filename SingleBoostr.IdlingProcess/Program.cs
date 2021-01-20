@@ -102,12 +102,10 @@ namespace SingleBoostr.IdlingProcess
                 ErrorPopup($"{Enum.GetName(typeof(ErrorCodes), tryConnectSteam)} unknown fatal error caused by appId: {args[0]}\nPlease exit the client and create a GitHub issue and describe what error you got");
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        
         private static void ErrorPopup(string msg)
         {
             MessageBox.Show(msg, "SingleBoostr.IdlingProcess ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            GC.Collect(GC.MaxGeneration);
             Environment.Exit(1);
         }
     }
