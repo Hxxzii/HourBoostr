@@ -70,13 +70,14 @@ namespace SingleBoostr.Client
                 Console.WriteLine("Please input one appId at a time, then press enter");
                 Console.WriteLine("Do this for each individual appId that you want to input");
                 Console.WriteLine("When you are done inputting appIds and you're ready to start idling, input anything that isn't a number (ex: done)");
-                Console.WriteLine("Small note: All whitespaces/spaces will be removed from any inputted string");
 
                 SetConsoleTextColor(ConsoleColor.Green);
-                
+
+                var whitespaceRegex = new Regex(@"\s+");
+
                 while (true)
                 {
-                    var inputtedAppId = RemoveAllWhitespace(Console.ReadLine());
+                    var inputtedAppId = whitespaceRegex.Replace(Console.ReadLine() ?? string.Empty, string.Empty);
                     if (string.IsNullOrWhiteSpace(inputtedAppId) || !inputtedAppId.All(char.IsDigit))
                     {
                         SetConsoleTextColor(ConsoleColor.White);
@@ -119,7 +120,7 @@ namespace SingleBoostr.Client
             
             foreach (var i in listOfApps)
             {
-                if (!int.TryParse(i, out _) || string.IsNullOrWhiteSpace(i))
+                if (!uint.TryParse(i, out var id) || string.IsNullOrWhiteSpace(i))
                 {
                     SetConsoleTextColor(ConsoleColor.Yellow);
                     Console.WriteLine($"WARNING: AppId {i} is an invalid AppId, skipping");
@@ -139,8 +140,7 @@ namespace SingleBoostr.Client
                     Arguments = $"{i} {currentProcessId}"
                 };
 
-                var startProcess = Process.Start(startInfo);
-                ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, int.Parse(i)));
+                ActiveIdlingProcesses.Add(new IdlingAppData(Process.Start(startInfo), id));
                 SetConsoleTextColor(ConsoleColor.Green);
                 Console.WriteLine($"AppId {i} is now boosting!");
             }
@@ -170,15 +170,9 @@ namespace SingleBoostr.Client
                     Arguments = $"{appid} {Process.GetCurrentProcess().Id}"
                 };
 
-                var startProcess = Process.Start(startInfo);
-                ActiveIdlingProcesses.Add(new IdlingAppData(startProcess, appid));
+                ActiveIdlingProcesses.Add(new IdlingAppData(Process.Start(startInfo), appid));
                 Console.WriteLine($"Idling process for AppId {appid} has been restarted");
             }
-        }
-
-        private static string RemoveAllWhitespace(string str)
-        {
-            return RegexInst.Replace(str, string.Empty);
         }
 
         internal static void SetConsoleTextColor(ConsoleColor color)
@@ -186,7 +180,6 @@ namespace SingleBoostr.Client
             Console.ForegroundColor = color;
         }
         
-        private static Regex RegexInst { get; } = new Regex(@"\s+");
         private static List<IdlingAppData> ActiveIdlingProcesses { get; } = new List<IdlingAppData>();
     }
 }

@@ -1,4 +1,4 @@
-// TODO: Actually handle the errors+error codes
+// TODO: Find out how to replicate every error code 
 // NOTE: This helper/background program is called with two arguments
 // The first argument is the AppId of the game/app we want to idle
 // The second argument is the process id of the "parent/master" exe
@@ -8,7 +8,6 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Steam4NET;
@@ -94,7 +93,7 @@ namespace SingleBoostr.IdlingProcess
             } else if (tryConnectSteam == ErrorCodes.UserFail)
             {
                 ErrorPopup($"UserFail fatal error - you don't own AppId {args[0]}\nYou can only idle apps that you own\nPlease restart the client with only AppIds that you own"); 
-            } else if (tryConnectSteam == ErrorCodes.SteamWorksFail)
+            } else if (tryConnectSteam == ErrorCodes.SteamworksFail)
             {
                 ErrorPopup($"SteamworksFail fatal error (AppId {args[0]}) - you need to have the Steam client open while you use this app\nPlease restart the client and try again");
             } else 
