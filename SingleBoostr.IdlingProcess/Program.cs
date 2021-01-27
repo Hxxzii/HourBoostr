@@ -9,7 +9,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Steam4NET;
 
 namespace SingleBoostr.IdlingProcess
@@ -49,14 +48,15 @@ namespace SingleBoostr.IdlingProcess
             return _steamApp == null ? ErrorCodes.AppsFail : ErrorCodes.Success;
         }
 
-        private static async Task Main(string[] args)
+        private static async Task<int> Main(string[] args)
         {
-            var parentProcessId = -1;
             if (args.Length == 0 || args[0] is null || args[1] is null || 
-                !uint.TryParse(args[0], out _) || !int.TryParse(args[1], out parentProcessId) && parentProcessId > 0)
+                !uint.TryParse(args[0], out _) || !int.TryParse(args[1], out var parentProcessId) && parentProcessId >= 0)
             {
-                ErrorPopup("Insufficient/invalid arguments called - exiting\nIf you're trying to idle your games, open SingleBoostr.Client.exe instead");
+                return (byte) ErrorCodes.InvalidArguments;
             }
+
+            var appId = args[0];
 
             _bwg = new BackgroundWorker { WorkerSupportsCancellation = true };
             _bwg.DoWork += async (sender, e) =>
@@ -66,7 +66,7 @@ namespace SingleBoostr.IdlingProcess
 
                 if (parentProcess == null)
                 {
-                    ErrorPopup("Invalid parent process ID\nPlease exit the client and create a GitHub issue if you get this error");
+                    Environment.Exit((byte) ErrorCodes.InvalidParentProcessId); 
                 }
                 else
                 {
@@ -82,7 +82,7 @@ namespace SingleBoostr.IdlingProcess
                 }
             };
 
-            Environment.SetEnvironmentVariable("SteamAppId", args[0]);
+            Environment.SetEnvironmentVariable("SteamAppId", appId);
 
             var tryConnectSteam = ConnectToSteam();
             
@@ -90,33 +90,13 @@ namespace SingleBoostr.IdlingProcess
             { 
                 _bwg.RunWorkerAsync(parentProcessId);
                 await Task.Delay(-1);
-            } else if (tryConnectSteam == ErrorCodes.UserFail)
-            {
-                ErrorPopup($"UserFail fatal error - you don't own AppId {args[0]}\nYou can only idle apps that you own\nPlease restart the client with only AppIds that you own"); 
-            } else if (tryConnectSteam == ErrorCodes.SteamworksFail)
-            {
-                ErrorPopup($"SteamworksFail fatal error (AppId {args[0]}) - you need to have the Steam client open while you use this app\nPlease restart the client and try again");
-            } else 
-            {
-                ErrorPopup($"{Enum.GetName(typeof(ErrorCodes), tryConnectSteam)} unknown fatal error caused by appId: {args[0]}\nPlease exit the client and create a GitHub issue and describe what error you got");
             }
-        }
-        
-        private static void ErrorPopup(string msg)
-        {
-            MessageBox.Show(msg, "SingleBoostr.IdlingProcess ERROR", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            Environment.Exit(1);
-        }
-    }
+            else
+            {
+                return (byte) tryConnectSteam;
+            }
 
-    
-    internal enum ErrorCodes : byte
-    {
-        Success = 0, 
-        SteamworksFail = 1,
-        ClientFail = 2,
-        PipeFail = 3,
-        UserFail = 4,
-        AppsFail = 5
+            return 0;
+        }
     }
 }

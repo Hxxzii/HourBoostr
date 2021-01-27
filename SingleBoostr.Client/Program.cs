@@ -141,6 +141,43 @@ namespace SingleBoostr.Client
                 };
 
                 ActiveIdlingProcesses.Add(new IdlingAppData(Process.Start(startInfo), id));
+                await Task.Delay(256);
+                var justAdded = ActiveIdlingProcesses.Last();
+                ErrorCodes exitCode;
+                try
+                {
+                    exitCode = (ErrorCodes) justAdded.IdlingProcess.ExitCode;
+                }
+                catch (InvalidOperationException)
+                {
+                    exitCode = ErrorCodes.Success;
+                }
+                SetConsoleTextColor(ConsoleColor.DarkRed);
+                switch (exitCode)
+                {
+                    case ErrorCodes.AppsFail:
+                    case ErrorCodes.ClientFail:
+                    case ErrorCodes.InvalidArguments:
+                    case ErrorCodes.InvalidParentProcessId:
+                        Console.WriteLine($"FATAL ERROR: Trying to idle appId {justAdded.AppId} returned error {Enum.GetName(typeof(ErrorCodes), exitCode)}");
+                        Console.WriteLine("(exit the app and please make a GitHub issue with the specified error if you get this error)");
+                        await Task.Delay(-1);
+                        break;
+                    case ErrorCodes.UserFail:
+                        Console.WriteLine($"FATAL ERROR: you tried to idle appId {justAdded.AppId}, which you apparently don't own (?)");
+                        Console.WriteLine("(please exit the app & try again with only appIds that you actually own)");
+                        await Task.Delay(-1);
+                        break;
+                    case ErrorCodes.SteamworksFail:
+                    case ErrorCodes.PipeFail:
+                        Console.WriteLine("FATAL ERROR: you tried to idle without the Steam client open - the Steam client must be open");
+                        Console.WriteLine("(please exit the app & try again with the Steam client open)");
+                        await Task.Delay(-1);
+                        break;
+                    case ErrorCodes.Success:
+                    default:
+                        break;
+                }
                 SetConsoleTextColor(ConsoleColor.Green);
                 Console.WriteLine($"AppId {i} is now boosting!");
             }
