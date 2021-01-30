@@ -117,7 +117,8 @@ namespace SingleBoostr.Client
                 Console.WriteLine("WARNING: More than 33 appIds detected");
                 Console.WriteLine("Trying to idle more than 33 appIds may result in Steam not idling some of your apps at all!");
             }
-            
+
+            // i is the AppId
             foreach (var i in listOfApps)
             {
                 if (!uint.TryParse(i, out var id) || string.IsNullOrWhiteSpace(i))
@@ -140,18 +141,23 @@ namespace SingleBoostr.Client
                     Arguments = $"{i} {currentProcessId}"
                 };
 
-                ActiveIdlingProcesses.Add(new IdlingAppData(Process.Start(startInfo), id));
+                ActiveIdlingApps.Add(i, Process.Start(startInfo));
+
+                var justAdded = ActiveIdlingApps.Last().Value;
                 await Task.Delay(256);
-                var justAdded = ActiveIdlingProcesses.Last();
+
                 ErrorCodes exitCode;
                 try
                 {
-                    exitCode = (ErrorCodes) justAdded.IdlingProcess.ExitCode;
+                    exitCode = (ErrorCodes) justAdded.ExitCode;
                 }
-                catch (InvalidOperationException)
+                // An InvalidOperationException will be raised if we try accessing the exit code of a process which hasn't exited
+                // Process hasn't exited yet within the 256ms window, meaning it hasn't crashed/raised an exception which means success
+                catch (InvalidOperationException) 
                 {
                     exitCode = ErrorCodes.Success;
                 }
+
                 SetConsoleTextColor(ConsoleColor.DarkRed);
                 switch (exitCode)
                 {
@@ -159,12 +165,12 @@ namespace SingleBoostr.Client
                     case ErrorCodes.ClientFail:
                     case ErrorCodes.InvalidArguments:
                     case ErrorCodes.InvalidParentProcessId:
-                        Console.WriteLine($"FATAL ERROR: Trying to idle appId {justAdded.AppId} returned error {Enum.GetName(typeof(ErrorCodes), exitCode)}");
+                        Console.WriteLine($"FATAL ERROR: Trying to idle appId {i} returned error {Enum.GetName(typeof(ErrorCodes), exitCode)}");
                         Console.WriteLine("(exit the app and please make a GitHub issue with the specified error if you get this error)");
                         await Task.Delay(-1);
                         break;
                     case ErrorCodes.UserFail:
-                        Console.WriteLine($"FATAL ERROR: you tried to idle appId {justAdded.AppId}, which you apparently don't own (?)");
+                        Console.WriteLine($"FATAL ERROR: you tried to idle appId {i}, which you apparently don't own (?)");
                         Console.WriteLine("(please exit the app & try again with only appIds that you actually own)");
                         await Task.Delay(-1);
                         break;
@@ -182,33 +188,18 @@ namespace SingleBoostr.Client
                 Console.WriteLine($"AppId {i} is now boosting!");
             }
 
-            var random = new Random();
-
             SetConsoleTextColor(ConsoleColor.Yellow);
             while (true)
             {
                 await Task.Delay(seconds * 1000);
                 
-                var index = random.Next(ActiveIdlingProcesses.Count);
-                var appid = ActiveIdlingProcesses[index].AppId;
+                var toRestart = ActiveIdlingApps.ElementAt(new Random().Next(ActiveIdlingApps.Count));
 
-                ActiveIdlingProcesses[index].IdlingProcess.Kill();
-                ActiveIdlingProcesses[index].IdlingProcess.Dispose();
-                ActiveIdlingProcesses.RemoveAt(index);
-                
-                var startInfo = new ProcessStartInfo(exe)
-                {
-                    UseShellExecute = false,
-                    WindowStyle = ProcessWindowStyle.Normal,
-                    CreateNoWindow = true,
-                    //RedirectStandardInput = true,
-                    //RedirectStandardOutput = true,
-                    //RedirectStandardError = true,
-                    Arguments = $"{appid} {Process.GetCurrentProcess().Id}"
-                };
+                toRestart.Value.Kill();
+                toRestart.Value.WaitForExit();
+                toRestart.Value.Start();
 
-                ActiveIdlingProcesses.Add(new IdlingAppData(Process.Start(startInfo), appid));
-                Console.WriteLine($"Idling process for AppId {appid} has been restarted");
+                Console.WriteLine($"Idling process for AppId {toRestart.Key} has been restarted");
             }
         }
 
@@ -216,7 +207,8 @@ namespace SingleBoostr.Client
         {
             Console.ForegroundColor = color;
         }
-        
-        private static List<IdlingAppData> ActiveIdlingProcesses { get; } = new List<IdlingAppData>();
+
+        // Key: AppId, Value: Process
+        private static readonly Dictionary<string, Process> ActiveIdlingApps = new Dictionary<string, Process>();
     }
 }

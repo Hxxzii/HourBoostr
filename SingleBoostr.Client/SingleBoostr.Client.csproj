@@ -44,7 +44,6 @@
   <ItemGroup>
     <Compile Include="ConfigHandler.cs" />
     <Compile Include="ErrorCodes.cs" />
-    <Compile Include="IdlingAppData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
