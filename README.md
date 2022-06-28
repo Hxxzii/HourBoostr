@@ -1,3 +1,7 @@
+# [Outdated workaround, please use this working fork instead now.](https://github.com/Ni1kko/HourBoostr)
+
+----
+
 ## This is a fork of SingleBoostr found in HourBoostr - you can find the original author's repository [here](https://github.com/Ezzpify/HourBoostr) and latest fork binary downloads [here](https://github.com/hanzbadua/SingleBoostr/releases)
 ### This fork aims for simplicity (console-only interface, hopefully low RAM usage)
 ### If you have any problems with this fork, make an issue in this repository, NOT the original repository.
